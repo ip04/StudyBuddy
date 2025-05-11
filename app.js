@@ -14,7 +14,7 @@ app.use("/api/users", require("./routes/users"));
 app.use("/api/test", require("./routes/debug"));
 app.use("/api/friends", require("./routes/friends"));
 app.use("/api/posts", require("./routes/posts"));
-// app.use("/api/groups", require("./routes/groups"));
+app.use("/api/groups", require("./routes/groups"));
 
 app.get("/", (req, res) => {
   res.send("StudyBuddy API is working 🚀");

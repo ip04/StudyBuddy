@@ -1,13 +1,15 @@
 const Group = require("../models/Group");
-const User = require("../models/User");
+
+//TODO: only the group members can read the posts in the group
 
 exports.createGroup = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, isClosed } = req.body;
 
     const group = new Group({
       name,
       description,
+      isClosed: isClosed ?? false,
       members: [req.user.id],
       admins: [req.user.id],
     });
@@ -38,9 +40,42 @@ exports.joinGroup = async (req, res) => {
     if (group.members.includes(req.user.id))
       return res.status(400).json({ message: "Already a member" });
 
-    group.members.push(req.user.id);
+    if (!group.isClosed) {
+      group.members.push(req.user.id);
+    } else {
+      group.joinRequests.push(req.user.id);
+    }
+
     await group.save();
-    res.json({ message: "Joined group", data: group });
+    if (group.members.includes(req.user.id)) {
+      res.json({ message: "Joined group", data: group });
+    } else {
+      res.json({ message: "Waiting for admin approval" });
+    }
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.cancelJoinGroupRequest = async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) return res.status(404).json({ message: "Group not found" });
+
+    if (group.members.includes(req.user.id))
+      return res.status(400).json({ message: "Already a member" });
+
+    if (!group.joinRequests.includes(req.user.id))
+      return res
+        .status(400)
+        .json({ message: "You have not requested to join this group" });
+
+    group.joinRequests = group.joinRequests.filter(
+      (id) => id.toString() !== req.user.id
+    );
+
+    await group.save();
+    res.json({ message: "Join request canceled" });
   } catch {
     res.status(500).json({ message: "Server error" });
   }

@@ -6,6 +6,7 @@ const {
   joinGroup,
   leaveGroup,
   deleteGroup,
+  cancelJoinGroupRequest,
 } = require("../controllers/groupController");
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.get("/", auth, getAllGroups);
 
 //? join group
 router.post("/:id/join", auth, joinGroup);
+
+//? cancel join group request
+router.post("/:id/cancel", auth, cancelJoinGroupRequest);
 
 //? leave group
 router.post("/:id/leave", auth, leaveGroup);

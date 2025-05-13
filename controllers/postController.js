@@ -93,3 +93,49 @@ exports.deletePost = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Comments
+exports.createComment = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = {
+      user: req.user.id,
+      text: req.body.text,
+    };
+
+    post.comments.push(comment);
+    await post.save();
+
+    res.status(201).json({ message: "Comment added", comments: post.comments });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.deleteComment = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const comment = post.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    if (
+      comment.user.toString() !== req.user.id &&
+      post.author.toString() !== req.user.id
+    )
+      return res.status(403).json({ message: "Not authorized" });
+
+    post.comments = post.comments.filter(
+      (c) => c._id.toString() !== req.params.commentId
+    );
+    await post.save();
+
+    res.json({ message: "Comment deleted" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

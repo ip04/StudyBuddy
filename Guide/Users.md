@@ -141,3 +141,13 @@ Deletes the authenticated user's account.
 ```json
 { "error": "Server Error" }
 ```
+
+## 🗂️ Route Summary
+
+| Method | Endpoint                     | Description            |
+| ------ | ---------------------------- | ---------------------- |
+| GET    | `/api/users/me`              | Get current user info  |
+| GET    | `/api/users/:id`             | Get user by ID         |
+| PUT    | `/api/users/update`          | Update username        |
+| PUT    | `/api/users/change-password` | Change password        |
+| DELETE | `/api/users/delete`          | Delete current account |

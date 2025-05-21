@@ -48,7 +48,7 @@ router.post(
   cancelPromoteToModifier
 );
 
-//delete group - accessible by admins only
+//delete group - accessible by the group creator only
 router.delete("/:id/delete", auth, deleteGroup);
 
 module.exports = router;

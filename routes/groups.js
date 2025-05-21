@@ -26,7 +26,4 @@ router.post("/:id/cancel", auth, cancelJoinGroupRequest);
 //? leave group
 router.post("/:id/leave", auth, leaveGroup);
 
-//! delete group (admin only)
-router.delete("/:id/delete", auth, deleteGroup);
-
 module.exports = router;

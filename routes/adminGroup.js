@@ -9,6 +9,7 @@ const {
   cancelPromoteToModifier,
   promoteToModifier,
   removePost,
+  deleteGroup,
 } = require("../controllers/adminController");
 
 const router = express.Router();
@@ -46,5 +47,8 @@ router.post(
   auth,
   cancelPromoteToModifier
 );
+
+//delete group - accessible by admins only
+router.delete("/:id/delete", auth, deleteGroup);
 
 module.exports = router;

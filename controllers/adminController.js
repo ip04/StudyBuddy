@@ -1,8 +1,6 @@
 const Group = require("../models/Group");
 const Post = require("../models/Post");
 
-//TODO: when admin leave (or delete account) give someone else this rule
-
 // approve\decline join requests
 exports.aprroveJoinRequest = async (req, res) => {
   try {

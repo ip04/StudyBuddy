@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const Group = require("../models/Group");
 
 exports.getCurrentUser = async (req, res) => {
   try {
@@ -61,8 +62,41 @@ exports.changePassword = async (req, res) => {
 
 exports.deleteAccount = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.user.id);
-    res.json({ message: "User deleted" });
+    const userId = req.user.id;
+
+    // 1. Remove user from all groups' members & admins
+    const groups = await Group.find({
+      $or: [{ members: userId }, { admins: userId }, { createdBy: userId }],
+    });
+
+    for (const group of groups) {
+      // Remove user from members/admins
+      group.members = group.members.filter((id) => id.toString() !== userId);
+      group.admins = group.admins.filter((id) => id.toString() !== userId);
+
+      // 2. Handle if user was the creator
+      if (group.createdBy?.toString() === userId) {
+        if (group.admins.length > 0) {
+          // Transfer ownership to another admin
+          group.createdBy = group.admins[0];
+        } else if (group.members.length > 0) {
+          // Transfer to member if no admins
+          group.createdBy = group.members[0];
+          group.admins.push(group.members[0]); // Promote to admin
+        } else {
+          // No members left — delete the group
+          await group.deleteOne();
+          continue;
+        }
+      }
+
+      await group.save();
+    }
+
+    // 3. Delete the user
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: "User and related group references deleted" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }

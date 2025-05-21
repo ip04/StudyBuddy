@@ -83,33 +83,39 @@ exports.cancelJoinGroupRequest = async (req, res) => {
 
 exports.leaveGroup = async (req, res) => {
   try {
+    const userId = req.user.id;
     const group = await Group.findById(req.params.id);
+
     if (!group) return res.status(404).json({ message: "Group not found" });
 
-    if (!group.members.includes(req.user.id))
-      return res.status(400).json({ message: "Not a memeber of the group" });
+    if (!group.members.includes(userId))
+      return res.status(400).json({ message: "Not a member of the group" });
 
-    group.members = group.members.filter((id) => id.toString() !== req.user.id);
-    group.admins = group.admins.filter((id) => id.toString() !== req.user.id);
+    // Remove user from members/admins
+    group.members = group.members.filter((id) => id.toString() !== userId);
+    group.admins = group.admins.filter((id) => id.toString() !== userId);
+
+    // Handle if user was the creator
+    if (group.createdBy.toString() === userId) {
+      if (group.admins.length > 0) {
+        // Transfer ownership to another admin
+        group.createdBy = group.admins[0];
+      } else if (group.members.length > 0) {
+        // Transfer to member if no admins
+        const newAdmin = group.members[0];
+        group.createdBy = newAdmin;
+        group.admins.push(newAdmin);
+      } else {
+        // No members left — delete the group
+        await group.deleteOne();
+        return res.json({ message: "Group deleted as no members remain" });
+      }
+    }
 
     await group.save();
-    res.json({ message: "Left group" });
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-exports.deleteGroup = async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.id);
-    if (!group) return res.status(404).json({ message: "Group not found" });
-
-    if (!group.admins.includes(req.user.id))
-      return res.status(403).json({ message: "Not authorized" });
-
-    await group.deleteOne();
-    res.json({ message: "Group deleted" });
-  } catch {
+    res.json({ message: "Left group successfully" });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };

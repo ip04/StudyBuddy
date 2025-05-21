@@ -266,3 +266,23 @@ exports.cancelPromoteToModifier = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.deleteGroup = async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) return res.status(404).json({ message: "Group not found" });
+
+    if (!group.admins.includes(req.user.id))
+      return res.status(403).json({ message: "Not authorized" });
+
+    if (group.createdBy.toString() !== req.user.id)
+      return res
+        .status(403)
+        .json({ message: "Only the group creator can delete the group" });
+
+    await group.deleteOne();
+    res.json({ message: "Group deleted" });
+  } catch {
+    res.status(500).json({ message: "Server error" });
+  }
+};
